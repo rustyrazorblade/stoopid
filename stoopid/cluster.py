@@ -11,6 +11,15 @@ class Hello(Message):
     # ask to join cluster
     node_id = UUID
 
+class Topology(Message):
+    nodes = list
+
+class TopologyRequest(Message):
+    pass
+
+class NewNodeJoined(Message):
+    node_id = UUID
+
 class Node(object):
     node_id = None
 
@@ -18,19 +27,23 @@ class Node(object):
         self.node_id = node_id
 
 class Connection(object):
-    conn = None
+    sock = None
 
+    def __init__(self, socket):
+        self.sock = socket
 
+    @classmethod
     def connect(self, ip, port):
-        self.conn = socket.create_connection((ip, port))
+        sock = socket.create_connection((ip, port))
+        return Connection(sock)
 
     def send(self, message):
         pickled = dumps(message)
-        self.conn.send(pickled)
+        self.sock.send(pickled)
 
     def recv(self):
         # bocks
-        pickled = self.conn.recv(4096)
+        pickled = self.sock.recv(4096)
         return loads(pickled)
 
 
@@ -48,8 +61,7 @@ class Cluster(object):
 
     def join(self, ip, port):
         logger.info("Joining cluster")
-        conn = Connection()
-        conn.connect(ip, port)
+        conn = Connection.connect(ip, port)
         conn.send(Hello(node_id=uuid1()))
         self.start_informant()
 
@@ -80,12 +92,12 @@ class InformantServer(object):
     sock = None
     cluster = None
 
-    def __init__(self, sock, cluster):
-        self.sock = sock
+    def __init__(self, socket, cluster):
+        self.conn = Connection(socket)
         self.cluster = cluster
 
     def start(self):
         while True:
             logger.info("sleeping")
-            received = self.sock.recv(4096)
-            logger.info(received)
+            message = self.conn.recv()
+            logger.info(message)
