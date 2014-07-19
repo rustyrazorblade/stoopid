@@ -1,12 +1,37 @@
 import logging
 from gevent.server import StreamServer
+from gevent import socket
 from message import Message
+from cPickle import dumps, loads
+from uuid import UUID, uuid1
 
 logger = logging.getLogger(__name__)
 
 class Hello(Message):
     # ask to join cluster
-    pass
+    node_id = UUID
+
+class Node(object):
+    node_id = None
+
+    def __init__(self, node_id):
+        self.node_id = node_id
+
+class Connection(object):
+    conn = None
+
+
+    def connect(self, ip, port):
+        self.conn = socket.create_connection((ip, port))
+
+    def send(self, message):
+        pickled = dumps(message)
+        self.conn.send(pickled)
+
+    def recv(self):
+        # bocks
+        pickled = self.conn.recv(4096)
+        return loads(pickled)
 
 
 class Cluster(object):
@@ -23,6 +48,9 @@ class Cluster(object):
 
     def join(self, ip, port):
         logger.info("Joining cluster")
+        conn = Connection()
+        conn.connect(ip, port)
+        conn.send(Hello(node_id=uuid1()))
         self.start_informant()
 
     def start(self):
