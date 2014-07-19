@@ -12,11 +12,12 @@ from stoopid.cluster import Cluster
 
 parser = argparse.ArgumentParser(description="Stoopid Cluster")
 parser.add_argument("-s", dest="seeds", metavar="seeds", nargs="+")
+parser.add_argument("-i", dest="informant", metavar="informant", nargs="+", type=int, required=True)
 cli = parser.parse_args()
 
 logging.info("Starting cluster.")
 
-c = Cluster()
+c = Cluster(int(cli.informant[0]))
 
 if not cli.seeds:
     c.start()

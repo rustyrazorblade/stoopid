@@ -1,16 +1,25 @@
 import logging
 from gevent.server import StreamServer
+from message import Message
 
 logger = logging.getLogger(__name__)
+
+class Hello(Message):
+    # ask to join cluster
+    pass
+
 
 class Cluster(object):
 
     informant = None
+    informant_port = None
 
 
-    def __init__(self):
+    def __init__(self, informant_port):
         # seed
-        pass
+        assert informant_port > 0
+        self.informant_port = informant_port
+
 
     def join(self, ip, port):
         logger.info("Joining cluster")
@@ -30,7 +39,7 @@ class Cluster(object):
             server = InformantServer(socket, self)
             server.start()
 
-        self.informant = StreamServer(('127.0.0.1', 1234), handle_connection)
+        self.informant = StreamServer(('127.0.0.1', self.informant_port), handle_connection)
         self.informant.serve_forever()
 
 
