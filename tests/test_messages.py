@@ -1,5 +1,5 @@
 
-from stoopid.message import Message, MessageException, MissingFieldException, ExtraFieldException
+from stoopid.message import Message, MessageException, MissingFieldException, ExtraFieldException, TypeException
 from nose.tools import raises
 
 class TestMessage(Message):
@@ -18,3 +18,7 @@ def test_message_exception_missing_field():
 @raises(ExtraFieldException)
 def test_extra_field():
     m = TestMessage(id=2, name="boo")
+
+@raises(TypeException)
+def test_wrong_type():
+    m = TestMessage(id="wow")

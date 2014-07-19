@@ -2,6 +2,7 @@
 class MessageException(Exception): pass
 class MissingFieldException(MessageException): pass
 class ExtraFieldException(MessageException): pass
+class TypeException(MessageException): pass
 
 class MessageDescriptor(object):
 
@@ -40,6 +41,7 @@ class MessageMetaClass(type):
 
 class BaseMessage(object):
     _types = None
+
     def __init__(self, **kwargs):
 
         for k in self._types:
@@ -50,6 +52,11 @@ class BaseMessage(object):
         for k in kwargs:
             if k not in self._types:
                 raise ExtraFieldException("%s is not part of the spec" % k)
+
+        # check types
+        for k, v in kwargs.iteritems():
+            if not isinstance(v, self._types[k]):
+                raise TypeException()
 
 
         self._values = kwargs
