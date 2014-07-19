@@ -1,7 +1,5 @@
 import logging
-import socket
 from gevent.server import StreamServer
-from gevent import sleep
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +14,7 @@ class Cluster(object):
 
     def join(self, ip, port):
         logger.info("Joining cluster")
+        self.start_informant()
 
     def start(self):
         # starts a cluster, does not join
@@ -28,7 +27,7 @@ class Cluster(object):
 
         def handle_connection(socket, address):
             logger.info("Received connection")
-            server = InformantServer(socket)
+            server = InformantServer(socket, self)
             server.start()
 
         self.informant = StreamServer(('127.0.0.1', 1234), handle_connection)
@@ -42,10 +41,14 @@ class Cluster(object):
 class InformantServer(object):
     # serves a single connection
     sock = None
-    def __init__(self, sock):
+    cluster = None
+
+    def __init__(self, sock, cluster):
         self.sock = sock
+        self.cluster = cluster
 
     def start(self):
         while True:
             logger.info("sleeping")
-            sleep(1)
+            received = self.sock.recv(4096)
+            logger.info(received)
