@@ -1,7 +1,7 @@
 
 from stoopid.message import Message, MessageException, MissingFieldException, ExtraFieldException, TypeException
 from nose.tools import raises
-from pickle import dumps, loads
+from cPickle import dumps, loads
 
 class TestMessage(Message):
     id = int
