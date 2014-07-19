@@ -26,6 +26,17 @@ class Node(object):
     def __init__(self, node_id):
         self.node_id = node_id
 
+
+class Ring(object):
+    _nodes = None
+    def __init__(self):
+        self._nodes = []
+
+    def add(self, node):
+        assert isinstance(node, Node)
+        self._nodes.append(node)
+
+
 class Connection(object):
     sock = None
 
