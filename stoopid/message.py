@@ -1,10 +1,18 @@
 
 
-class Integer(object):
-    pytype = int
+class MessageDescriptor(object):
+    pass
+
+
 
 class MessageMetaClass(type):
     def __new__(meta, name, bases, dct):
+        attrs = {}
+
+        for k,v in dct.iteritems():
+            if k.startswith("_"): continue
+
+        dct['_attrs'] = attrs
 
         return super(MessageMetaClass, meta).__new__(meta, name, bases, dct)
 
@@ -13,10 +21,10 @@ class MessageMetaClass(type):
 
 
 class BaseMessage(object):
-    __metaclass__ = MessageMetaClass
+    pass
 
 
 
 class Message(BaseMessage):
     # base message class
-    pass
+    __metaclass__ = MessageMetaClass
