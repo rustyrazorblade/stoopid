@@ -1,28 +1,43 @@
 
 
 class MessageDescriptor(object):
-    pass
+
+    field = None
+
+    def __init__(self, field):
+        self.field = field
+
+    def __get__(self, instance, owner):
+        if not instance:
+            return
+        return instance._values[self.field]
+
+    def __set__(self, instance, value):
+        pass
 
 
 
 class MessageMetaClass(type):
     def __new__(meta, name, bases, dct):
-        attrs = {}
+        attrs = {"_values":{}, "_types": {}}
 
         for k,v in dct.iteritems():
-            if k.startswith("_"): continue
+            if k.startswith("_"):
+                attrs[k] = v
+                continue
 
-        dct['_attrs'] = attrs
+            attrs[k] = MessageDescriptor(k)
 
-        return super(MessageMetaClass, meta).__new__(meta, name, bases, dct)
+            attrs["_values"][k] = None
+            attrs["_types"][k] = v
 
-    def __call__(self, *args, **kwargs):
-        pass
+        klass = super(MessageMetaClass, meta).__new__(meta, name, bases, attrs)
+        return klass
 
 
 class BaseMessage(object):
-    pass
-
+    def __init__(self, **kwargs):
+        self._values = kwargs
 
 
 class Message(BaseMessage):
