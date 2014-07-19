@@ -1,4 +1,7 @@
 
+class MessageException(Exception): pass
+class MissingFieldException(MessageException): pass
+class ExtraFieldException(MessageException): pass
 
 class MessageDescriptor(object):
 
@@ -36,7 +39,19 @@ class MessageMetaClass(type):
 
 
 class BaseMessage(object):
+    _types = None
     def __init__(self, **kwargs):
+
+        for k in self._types:
+            if k not in kwargs:
+                raise MissingFieldException("%s is a required field" % k)
+
+        # check for extra fields
+        for k in kwargs:
+            if k not in self._types:
+                raise ExtraFieldException("%s is not part of the spec" % k)
+
+
         self._values = kwargs
 
 
