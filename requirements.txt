@@ -1,0 +1,9 @@
+gevent
+gnureadline
+greenlet
+ipdb
+ipdbplugin
+ipython
+nose
+wsgiref
+mock

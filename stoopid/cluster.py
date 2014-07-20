@@ -1,10 +1,13 @@
 from collections import defaultdict
 import logging
+from gevent.queue import Queue, Empty
 from gevent.server import StreamServer
 from gevent import socket
 from message import Message
 from cPickle import dumps, loads
 from uuid import UUID, uuid1
+
+from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
@@ -26,20 +29,40 @@ class Node(object):
     ip = None
     port = None
 
+    pool = None
+
     def __init__(self, node_id, ip, port):
         self.node_id = node_id
         self.ip = ip
         self.port = port
+        self.pool = Queue()
 
     @classmethod
-    def create(cls):
-        return Node(uuid1())
+    def create(cls, ip, port):
+        return Node(uuid1(), ip, port)
 
     def __hash__(self):
         return long(self.node_id.hex, 16)
 
     def __eq__(self, other):
         return self.node_id == other.node_id
+
+    @property
+    @contextmanager
+    def connection(self):
+        # returns a connection
+        # to be used as
+        # with node.connection as c:
+        #     do_stuff_with_c(c)
+
+        try:
+            connection = self.pool.get_nowait()
+        except Empty:
+            connection = Connection.connect(self.ip, self.port)
+
+        yield connection
+
+        self.pool.put(connection)
 
 class Ring(object):
     _nodes = None
@@ -50,9 +73,6 @@ class Ring(object):
         assert isinstance(node, Node)
         self._nodes.add(node)
 
-    @property
-    def connection(self):
-        return C
 
 
 class Connection(object):
