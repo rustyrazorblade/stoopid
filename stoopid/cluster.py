@@ -27,6 +27,15 @@ class Node(object):
     def __init__(self, node_id):
         self.node_id = node_id
 
+    @classmethod
+    def create(cls):
+        return Node(uuid1())
+
+    def __hash__(self):
+        return long(self.node_id.hex, 16)
+
+    def __eq__(self, other):
+        return self.node_id == other.node_id
 
 class Ring(object):
     _nodes = None
