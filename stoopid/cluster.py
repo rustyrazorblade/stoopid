@@ -23,9 +23,13 @@ class NewNodeJoined(Message):
 
 class Node(object):
     node_id = None
+    ip = None
+    port = None
 
-    def __init__(self, node_id):
+    def __init__(self, node_id, ip, port):
         self.node_id = node_id
+        self.ip = ip
+        self.port = port
 
     @classmethod
     def create(cls):
@@ -40,11 +44,15 @@ class Node(object):
 class Ring(object):
     _nodes = None
     def __init__(self):
-        self._nodes = []
+        self._nodes = set()
 
     def add(self, node):
         assert isinstance(node, Node)
-        self._nodes.append(node)
+        self._nodes.add(node)
+
+    @property
+    def connection(self):
+        return C
 
 
 class Connection(object):
@@ -74,6 +82,7 @@ class Cluster(object):
     informant_port = None
 
     _event_registry = None
+    _ring = None
 
 
     def __init__(self, informant_port):
@@ -81,6 +90,7 @@ class Cluster(object):
         assert informant_port > 0
         self.informant_port = informant_port
         self._event_registry = defaultdict(set)
+        self._ring = Ring()
 
         # this is kind of ugly
         @self.register(Hello)

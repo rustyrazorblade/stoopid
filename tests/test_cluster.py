@@ -37,8 +37,8 @@ def test_node_sets_work():
 def test_node_sets_work():
     id = uuid1()
 
-    tmp = Node(id)
-    tmp2 = Node(id)
+    tmp = Node(id, None, 45)
+    tmp2 = Node(id, None, 46)
 
     nset = set()
     nset.add(tmp)
