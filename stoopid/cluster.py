@@ -1,3 +1,4 @@
+from collections import defaultdict
 import logging
 from gevent.server import StreamServer
 from gevent import socket
@@ -63,11 +64,14 @@ class Cluster(object):
     informant = None
     informant_port = None
 
+    _event_registry = None
+
 
     def __init__(self, informant_port):
         # seed
         assert informant_port > 0
         self.informant_port = informant_port
+        self._event_registry = defaultdict(set)
 
 
     def join(self, ip, port):
@@ -93,9 +97,19 @@ class Cluster(object):
         self.informant = StreamServer(('127.0.0.1', self.informant_port), handle_connection)
         self.informant.serve_forever()
 
+    def register(self, event):
+        # registers function which accepts f to be called on event e
+        def wrapper(f):
+            self._event_registry[event].add(f)
+            return f
+        return wrapper
 
     def run(self):
         pass
+
+    def dispatch(self, e):
+        for f in self._event_registry[e]:
+            f()
 
 
 class InformantServer(object):
