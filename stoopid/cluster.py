@@ -73,6 +73,10 @@ class Cluster(object):
         self.informant_port = informant_port
         self._event_registry = defaultdict(set)
 
+        # this is kind of ugly
+        @self.register(Hello)
+        def handle_hello(message, connection):
+            logger.info("Received hello")
 
     def join(self, ip, port):
         logger.info("Joining cluster")
@@ -118,6 +122,7 @@ class InformantServer(object):
     # serves a single connection
     sock = None
     cluster = None
+    conn = None
 
     def __init__(self, socket, cluster):
         self.conn = Connection(socket)
@@ -125,6 +130,5 @@ class InformantServer(object):
 
     def start(self):
         while True:
-            logger.info("sleeping")
             message = self.conn.recv()
-            logger.info(message)
+            self.cluster.dispatch(message, self.conn)
