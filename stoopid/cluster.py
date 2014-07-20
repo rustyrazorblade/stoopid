@@ -97,19 +97,21 @@ class Cluster(object):
         self.informant = StreamServer(('127.0.0.1', self.informant_port), handle_connection)
         self.informant.serve_forever()
 
-    def register(self, event):
+    def register(self, message_type):
         # registers function which accepts f to be called on event e
         def wrapper(f):
-            self._event_registry[event].add(f)
+            self._event_registry[message_type].add(f)
             return f
         return wrapper
 
     def run(self):
         pass
 
-    def dispatch(self, e):
-        for f in self._event_registry[e]:
-            f()
+    def dispatch(self, message, connection=None):
+        # TODO: support inheritance?
+        message_type = type(message)
+        for f in self._event_registry[message_type]:
+            f(message, connection)
 
 
 class InformantServer(object):

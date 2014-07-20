@@ -13,10 +13,11 @@ def test_register_callback():
     tmp = []
 
     @c.register(TestMessage)
-    def handle_hello():
+    def handle_hello(message, connection):
         tmp.append(1)
 
     c.dispatch(TestMessage(id=1))
+    assert tmp == [1]
 
 
 
