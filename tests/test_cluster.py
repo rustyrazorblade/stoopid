@@ -70,6 +70,7 @@ def test_ring_iterator():
     c = Cluster(1234)
     c._ring.add(node())
 
+
     for n in c:
-        pass
+        assert isinstance(n, Node)
 
