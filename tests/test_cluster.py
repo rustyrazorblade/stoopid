@@ -1,6 +1,6 @@
 from uuid import uuid1
 from nose.tools import raises
-from stoopid.cluster import Cluster, Hello, Message, Node, Connection
+from stoopid.cluster import Cluster, Message, Node, Connection
 from mock import patch
 
 
@@ -9,6 +9,7 @@ from mock import patch
 class TestMessage(Message):
     id = int
 
+# example of how to test messages and response
 def test_register_callback():
     c = Cluster(1234)
     tmp = []
@@ -21,6 +22,8 @@ def test_register_callback():
     assert tmp == [1]
 
 
+def test_topology_is_returned():
+    c = Cluster(1234)
 
 
 def test_node_sets_work():

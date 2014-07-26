@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 from stoopid.cluster import Cluster
 
 parser = argparse.ArgumentParser(description="Stoopid Cluster")
-parser.add_argument("-s", dest="seeds", metavar="seeds", nargs="+")
+parser.add_argument("-s", dest="seeds", metavar="seeds", nargs="+", help="seed host:port of existing informant")
 parser.add_argument("-i", dest="informant", metavar="informant", nargs="+", type=int, required=True)
 cli = parser.parse_args()
 

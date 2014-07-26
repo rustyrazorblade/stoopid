@@ -11,20 +11,25 @@ from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
-class Hello(Message):
+class NodeJoin(Message):
     # ask to join cluster
     node_id = UUID
     ip = str
     port = int
 
+
 class Topology(Message):
+    # need to allow for more flexible typing, this is list of named tuple
     nodes = list
+
 
 class TopologyRequest(Message):
     pass
 
+
 class NewNodeJoined(Message):
     node_id = UUID
+
 
 class Node(object):
     node_id = None
@@ -67,13 +72,15 @@ class Node(object):
         self.pool.put(connection)
 
 class Ring(object):
-    _nodes = None
+    _nodes = None # set of Node
     def __init__(self):
         self._nodes = set()
 
     def add(self, node):
         assert isinstance(node, Node)
         self._nodes.add(node)
+
+
 
 
 
@@ -123,16 +130,29 @@ class Cluster(object):
         self._ring.add(self._node)
 
         # this is kind of ugly
-        @self.register(Hello)
-        def handle_hello(message, connection):
-            logger.info("Received hello (%s:%s), added to ring" % (message.ip, message.port))
+        @self.register(TopologyRequest)
+        def handle_topology_request(message, connection):
+            logger.debug("received topology request")
+            topology = []
+            for node in self._ring._nodes:
+                topology.append((node.node_id, node.ip, node.port))
+            return topology
+
 
     def join(self, ip, port):
         logger.info("Joining cluster")
 
         conn = Connection.connect(ip, port)
 
-        conn.send(Hello(node_id=self._node.node_id,
+        conn.send(TopologyRequest())
+        topology = conn.recv()
+        logger.info("got topology response")
+
+        for x in topology:
+            self._ring.add(Node(*x))
+            print "Added %s:%s:%s to cluster" % (x[0], x[1], x[2])
+
+        conn.send(NodeJoin(node_id=self._node.node_id,
                         ip=self.listen_ip,
                         port=self.informant_port))
 
