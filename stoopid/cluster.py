@@ -2,7 +2,9 @@ from collections import defaultdict
 import logging
 from gevent.queue import Queue, Empty
 from gevent.server import StreamServer
+
 from gevent import socket
+from gevent.pool import Pool
 from message import Message
 from cPickle import dumps, loads
 from uuid import UUID, uuid1
@@ -49,6 +51,11 @@ class Node(object):
 
     def __eq__(self, other):
         return self.node_id == other.node_id
+
+    def send(self, message):
+        with self.connection as c:
+            c.send(message)
+
 
     @property
     @contextmanager
@@ -137,7 +144,15 @@ class Cluster(object):
         @self.register(NodeJoin)
         def handle_node_join(message, connection):
             logger.info("Node joined %s", message)
-            self._ring.add(Node(message.node_id, message.ip, message.port))
+            n = Node(message.node_id, message.ip, message.port)
+
+            # if we don't already know about the new node, lets tell everyone
+            if n not in self:
+                logger.info("node not found in current ring, adding")
+                self._ring.add(n)
+                logger.info("broadcasting new ring state")
+                self.broadcast(message)
+
 
 
 
@@ -179,10 +194,6 @@ class Cluster(object):
         self.informant = StreamServer((listen_ip, self.informant_port), handle_connection)
         self.informant.serve_forever()
 
-    def broadcast(self, message):
-        for node in self._ring:
-            pass
-
     def register(self, message_type):
         # registers function which accepts f to be called on event e
         def wrapper(f):
@@ -201,10 +212,21 @@ class Cluster(object):
             if response:
                 connection.send(response)
 
+    def broadcast(self, message):
+        # tell everyone!
+        p = Pool(20)
+        tmp = lambda x: x.send(message)
+        p.map(tmp, self)
+
+
     # iterating over the cluster returns nodes out of the ring
     def __iter__(self):
         for node in self._ring._nodes:
             yield node
+
+    def __contains__(self, node):
+        assert isinstance(node, Node)
+        return node in self._ring._nodes
 
 
 class InformantServer(object):
