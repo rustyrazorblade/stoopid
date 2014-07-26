@@ -27,10 +27,6 @@ class TopologyRequest(Message):
     pass
 
 
-class NewNodeJoined(Message):
-    node_id = UUID
-
-
 class Node(object):
     node_id = None
     ip = None
@@ -138,6 +134,12 @@ class Cluster(object):
                 topology.append((node.node_id, node.ip, node.port))
             return topology
 
+        @self.register(NodeJoin)
+        def handle_node_join(message, connection):
+            logger.info("Node joined %s", message)
+            self._ring.add(Node(message.node_id, message.ip, message.port))
+
+
 
     def join(self, ip, port):
         logger.info("Joining cluster")
@@ -152,14 +154,12 @@ class Cluster(object):
             self._ring.add(Node(*x))
             print "Added %s:%s:%s to cluster" % (x[0], x[1], x[2])
 
+        logger.info("sending join message for myself")
         conn.send(NodeJoin(node_id=self._node.node_id,
-                        ip=self.listen_ip,
-                        port=self.informant_port))
+                           ip=self.listen_ip,
+                           port=self.informant_port))
 
         self.start_informant(self.listen_ip)
-        # get ring topology
-
-        # tell everyone about me
 
 
     def start(self):
@@ -179,6 +179,10 @@ class Cluster(object):
         self.informant = StreamServer((listen_ip, self.informant_port), handle_connection)
         self.informant.serve_forever()
 
+    def broadcast(self, message):
+        for node in self._ring:
+            pass
+
     def register(self, message_type):
         # registers function which accepts f to be called on event e
         def wrapper(f):
@@ -196,6 +200,11 @@ class Cluster(object):
             response = f(message, connection)
             if response:
                 connection.send(response)
+
+    # iterating over the cluster returns nodes out of the ring
+    def __iter__(self):
+        for node in self._ring._nodes:
+            yield node
 
 
 class InformantServer(object):

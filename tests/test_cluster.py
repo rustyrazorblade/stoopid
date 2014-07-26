@@ -9,6 +9,11 @@ from mock import patch
 class TestMessage(Message):
     id = int
 
+
+def node():
+    return Node.create('localhost', 1234)
+
+
 # example of how to test messages and response
 def test_register_callback():
     c = Cluster(1234)
@@ -59,4 +64,12 @@ def test_node_context_manager():
             pass
 
     assert m.call_count == 1
+
+
+def test_ring_iterator():
+    c = Cluster(1234)
+    c._ring.add(node())
+
+    for n in c:
+        pass
 
